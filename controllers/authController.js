@@ -4,26 +4,26 @@ const jwt = require("jsonwebtoken");
 // Generate OTP
 exports.generateOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { mobile } = req.body;
 
-    if (!email) return res.status(400).json({ message: "Email is required" });
+    if (!mobile) return res.status(400).json({ message: "mobile is required" });
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Save OTP with expiry in DB
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // valid 5 mins
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ mobile });
 
     if (!user) {
-      user = new User({ email, otp, otpExpiry });
+      user = new User({ mobile, otp, otpExpiry });
     } else {
       user.otp = otp;
       user.otpExpiry = otpExpiry;
     }
     await user.save();
 
-    // Later we can send via email/SMS
+    // Later we can send via mobile/SMS
     return res.status(200).json({
       message: "OTP generated successfully",
       otp, // ⚠️ in real-world don’t send OTP in response
@@ -36,9 +36,9 @@ exports.generateOtp = async (req, res) => {
 // Verify OTP & Generate Token
 exports.verifyOtp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { mobile, otp } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ mobile });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (user.otp !== otp || user.otpExpiry < Date.now()) {
@@ -46,7 +46,7 @@ exports.verifyOtp = async (req, res) => {
     }
 
     // Generate JWT token
-    const token = jwt.sign({ userId: user._id, email: user.email }, "secret123", {
+    const token = jwt.sign({ userId: user._id, mobile: user.mobile }, "secret123", {
       expiresIn: "1h",
     });
 
@@ -57,6 +57,7 @@ exports.verifyOtp = async (req, res) => {
 
     return res.status(200).json({
       message: "OTP verified successfully",
+      mobile: user.mobile,
       token,
     });
   } catch (error) {

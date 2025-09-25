@@ -10,8 +10,8 @@ const getUsers = async (req, res) => {
 // @desc   Create new user
 // @route  POST /api/users
 const createUser = async (req, res) => {
-  const { name, email } = req.body;
-  const user = new User({ name, email });
+  const { name, mobile } = req.body;
+  const user = new User({ name, mobile });
   await user.save();
   res.status(201).json(user);
 };
